@@ -33,13 +33,12 @@ const caRSA = generateKeyPairSync("rsa", {
 // 要传递的信件内容,
 const info = {
   domain: "http://localhost:8080",
+  publicKey: serverRSA.publicKey,
 };
-// server的公钥进行加密
-const encryptedInfo = publicEncrypt(serverRSA.publicKey, Buffer.from(JSON.stringify(info)));
 
 // 把申请信息发送给CA请求颁发证书
 // 实现签名的并不是info，而是info的哈希值
-const infoHash = createHash("sha256").update(JSON.stringify(encryptedInfo)).digest("hex");
+const infoHash = createHash("sha256").update(JSON.stringify(info)).digest("hex");
 const passphrase = "passphrase";
 
 function getSign(content, privateKey, passphrase) {
@@ -58,7 +57,7 @@ const sign = getSign(infoHash, caRSA.privateKey, passphrase);
 // 数字证书: 两部分内容
 const cert = {
   sign, // CA给server颁发的签名
-  info: encryptedInfo, // server提供给CA的信息，domain和公钥, 如果签名正确就可以使用这些信息了
+  info, // server提供给CA的信息，domain和公钥, 如果签名正确就可以使用这些信息了
 };
 
 // 1.使用ca的公钥验证，成功之后拿到服务器的公钥
@@ -77,8 +76,8 @@ try {
   if (isValid) {
     console.log("这个服务器是真实有效的\r\n");
     // 如果想要给服务器发送数据，那么就可以用这个public key进行数据加密并发送了
-    const decryptedInfo = privateDecrypt(serverRSA.privateKey, cert.info);
-    console.log("解密后的信息:", decryptedInfo.toString());
+
+    console.log("解密后的信息:", cert.info);
   }
 } catch (error) {
   console.log("验证失败", error);

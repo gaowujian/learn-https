@@ -20,8 +20,8 @@ const server = crypto.createDiffieHellman(prime, generator);
 const serverKeys = server.generateKeys(); //valB
 
 // 计算协商密钥
-const clientSecret = client.computeSecret(serverKeys); //Math.pow(valB, secretA) % N
-const serverSecret = server.computeSecret(clientKeys); //Math.pow(valA, secretB) % N
+const clientSecret = client.computeSecret(serverKeys); //等价于Math.pow(valB, secretA) % N
+const serverSecret = server.computeSecret(clientKeys); //等价于Math.pow(valA, secretB) % N
 
 console.log(clientSecret.toString("hex"));
 console.log("协商密钥是否相同:", clientSecret.toString("hex") === serverSecret.toString("hex"));

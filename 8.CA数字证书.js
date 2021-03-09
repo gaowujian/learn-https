@@ -1,6 +1,11 @@
 const { generateKeyPairSync, createHash, createSign, createVerify, publicEncrypt, privateDecrypt } = require("crypto");
 // * 模拟CA的原理
 
+//  CA(certificate authority)证书颁发机构
+// 数字证书是一个由第三方权威机构发出的
+// 数字证书是一个电子文件
+// 数字证书可以用来证明证书的的所有人身份和以及所有人拥有某个公钥。
+
 // 生成密钥对
 const serverRSA = generateKeyPairSync("rsa", {
   modulusLength: 1024,
@@ -30,7 +35,9 @@ const caRSA = generateKeyPairSync("rsa", {
   },
 });
 
-// 要传递的信件内容,
+// 先模拟服务器向CA机构申请证书的流程
+
+// info是文件信息
 const info = {
   domain: "http://localhost:8080",
   publicKey: serverRSA.publicKey,
@@ -41,6 +48,7 @@ const info = {
 const infoHash = createHash("sha256").update(JSON.stringify(info)).digest("hex");
 const passphrase = "passphrase";
 
+// 给文件签名
 function getSign(content, privateKey, passphrase) {
   const signObj = createSign("rsa-sha256");
   signObj.update(content);
@@ -56,28 +64,28 @@ const sign = getSign(infoHash, caRSA.privateKey, passphrase);
 
 // 数字证书: 两部分内容
 const cert = {
-  sign, // CA给server颁发的签名
-  info, // server提供给CA的信息，domain和公钥, 如果签名正确就可以使用这些信息了
+  sign, // CA的签名信息
+  info, // 服务器的公钥和其他信息
 };
-
-// 1.使用ca的公钥验证，成功之后拿到服务器的公钥
 
 function verifySign(content, sign, publicKey) {
   const verifyObj = createVerify("rsa-sha256");
   verifyObj.update(content);
-  //verifyObj肯定已经拿到了content的数据，在内部使用public做一次签名，然后和sign对比
   return verifyObj.verify(publicKey, sign, "hex");
 }
 
 try {
-  const isValid = verifySign(infoHash, sign, caRSA.publicKey);
+  // 浏览器验证CA的签名
+  const isValid = verifySign(infoHash, cert.sign, caRSA.publicKey);
   console.log("浏览器验证CA的签名", isValid);
 
   if (isValid) {
     console.log("这个服务器是真实有效的\r\n");
     // 如果想要给服务器发送数据，那么就可以用这个public key进行数据加密并发送了
-
-    console.log("解密后的信息:", cert.info);
+    console.log("证书内的有关服务器的有效信息为:", cert.info);
+    const serverPublicKey = cert.info.publicKey;
+    // 客户端拿到了服务端的公钥，之后可以用这个key加密信息并发送给服务器端，计算协商秘钥
+    // xxx 其他逻辑
   }
 } catch (error) {
   console.log("验证失败", error);

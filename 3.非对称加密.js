@@ -34,7 +34,7 @@ console.log("c:", c); //加密后的数据
 const original = Math.pow(c, privateKey.d) % privateKey.N;
 console.log("original:", original); // 原始数据
 
-// * 为什么安全？？？
+// * 非对称加密为什么安全？？？
 // 因为{7,33}作为公钥可以给任何人，但是解密的时候需要 c, d, N,
 // c是加密后的数据，N是发送给其他人的公钥，我们还需要d，计算d需要知道fN, 这时候就需要知道p和q
 // 但是p和q是不会发送给其他人的，虽然其他人知道了N为33，但是不能反推出来p和q
